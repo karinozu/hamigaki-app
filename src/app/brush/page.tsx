@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useCallback } from 'react';
+import { useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useCamera } from '@/hooks/useCamera';
 import { useFaceDetection } from '@/hooks/useFaceDetection';
@@ -13,38 +13,40 @@ import { supabase } from '@/lib/supabase/client';
 
 export default function BrushPage() {
   const router = useRouter();
+  const effectCountRef = useRef(0);
   const { videoRef, isReady, error, start: startCamera, stop: stopCamera } = useCamera();
   const faceState = useFaceDetection(videoRef, isReady);
 
-  const handleComplete = useCallback(async (effectCount: number) => {
+  const handleComplete = useCallback(async () => {
     stopCamera();
-    await supabase.from('brushing_sessions').insert({
-      completed: true,
-      duration_sec: 120,
-      effects_count: effectCount,
-    });
+    try {
+      await supabase.from('brushing_sessions').insert({
+        completed: true,
+        duration_sec: 120,
+        effects_count: effectCountRef.current,
+      });
+    } catch {
+      // Supabase未設定時はスキップ
+    }
     router.push('/complete');
   }, [router, stopCamera]);
 
-  const { minutes, seconds, progress, isRunning, start: startTimer } = useTimer(
-    useCallback(() => handleComplete(effectCount), [handleComplete]) // eslint-disable-line
-  );
+  const { minutes, seconds, progress, isRunning, start: startTimer } = useTimer(handleComplete);
   const { currentEffect, effectCount } = useEffects(faceState.mouthOpen, isRunning);
 
-  // タイマー完了時にeffectCountを渡すため再定義
-  const timerWithCount = useTimer(
-    useCallback(() => handleComplete(effectCount), [handleComplete, effectCount])
-  );
+  useEffect(() => {
+    effectCountRef.current = effectCount;
+  }, [effectCount]);
 
   useEffect(() => {
     startCamera();
   }, [startCamera]);
 
   useEffect(() => {
-    if (isReady && !timerWithCount.isRunning) {
-      timerWithCount.start();
-    }
-  }, [isReady]); // eslint-disable-line
+    if (isReady && !isRunning) startTimer();
+    // isRunningは依存に含めない（初回のみ起動）
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isReady]);
 
   if (error) {
     return (
@@ -63,17 +65,11 @@ export default function BrushPage() {
         <CameraView ref={videoRef} />
         <EffectOverlay effect={currentEffect} mouthOpenRatio={faceState.mouthOpenRatio} />
 
-        {/* タイマー */}
         <div className="absolute top-4 right-4">
-          <BrushTimer
-            minutes={timerWithCount.minutes}
-            seconds={timerWithCount.seconds}
-            progress={timerWithCount.progress}
-          />
+          <BrushTimer minutes={minutes} seconds={seconds} progress={progress} />
         </div>
 
-        {/* 口を開けるよう促すメッセージ */}
-        {!faceState.mouthOpen && timerWithCount.isRunning && (
+        {!faceState.mouthOpen && isRunning && (
           <div className="absolute bottom-8 left-0 right-0 flex justify-center">
             <span className="bg-white/80 text-blue-800 font-black text-lg px-5 py-2 rounded-full shadow-lg">
               口を大きく開けよう！
