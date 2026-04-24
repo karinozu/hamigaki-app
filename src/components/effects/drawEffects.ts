@@ -210,51 +210,93 @@ export function drawBeam(
   ctx.restore();
 }
 
-// ---- パンダ ----
-export function drawPanda(
-  ctx: CanvasRenderingContext2D,
-  landmarks: Landmark[],
-  vw: number, vh: number, cw: number, ch: number
-) {
-  const le = lm(landmarks, 33, vw, vh, cw, ch);
-  const re = lm(landmarks, 263, vw, vh, cw, ch);
-  const nose = lm(landmarks, 1, vw, vh, cw, ch);
-  const fh = lm(landmarks, 10, vw, vh, cw, ch);
-  const ed = Math.abs(re.x - le.x);
+// ---- 電車 ----
+export function drawTrain(ctx: CanvasRenderingContext2D, cw: number, ch: number, frame: number) {
+  const cars = ['🚂', '🚃', '🚃', '🚃', '🚃'];
+  const charW = 62;
+  const trainW = cars.length * charW;
+  const speed = 3.5;
+  const trackY = ch * 0.6;
 
   ctx.save();
-  ctx.shadowColor = 'rgba(0,0,0,0.4)';
-  ctx.shadowBlur = 10;
 
-  // 耳（黒い丸）
-  const earR = ed * 0.4;
-  const earY = fh.y - earR * 0.3;
-  [[le.x - ed * 0.48, earY], [re.x + ed * 0.48, earY]].forEach(([ex, ey]) => {
+  // 枕木
+  ctx.lineWidth = 7;
+  for (let i = 0; i < cw + 30; i += 26) {
+    ctx.strokeStyle = 'rgba(120, 80, 40, 0.65)';
     ctx.beginPath();
-    ctx.arc(ex, ey, earR, 0, Math.PI * 2);
-    ctx.fillStyle = '#111';
-    ctx.fill();
+    ctx.moveTo(i, trackY + 34);
+    ctx.lineTo(i, trackY + 50);
+    ctx.stroke();
+  }
+
+  // レール（上下2本）
+  [trackY + 36, trackY + 48].forEach(y => {
+    ctx.strokeStyle = 'rgba(160, 160, 160, 0.8)';
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(0, y);
+    ctx.lineTo(cw, y);
+    ctx.stroke();
   });
 
-  // 目のパッチ（黒い楕円）
-  [[le, 0.25], [re, -0.25]].forEach(([eye, angle]) => {
-    const e = eye as { x: number; y: number };
-    ctx.save();
-    ctx.translate(e.x, e.y);
-    ctx.rotate(angle as number);
+  // 電車位置（右→左にループ）
+  const period = cw + trainW + 60;
+  const offset = (frame * speed) % period;
+  const trainX = cw + 30 - offset;
+
+  ctx.font = `${charW}px serif`;
+  ctx.textBaseline = 'middle';
+  cars.forEach((car, i) => ctx.fillText(car, trainX + i * charW, trackY));
+
+  // 煙（機関車の上）
+  for (let s = 0; s < 4; s++) {
+    const age = (frame * 1.2 + s * 18) % 55;
+    const sx = trainX + charW * 0.4 + Math.sin(age * 0.25) * 6;
+    const sy = trackY - 30 - age * 1.4;
+    const sr = 7 + age * 0.5;
+    ctx.globalAlpha = Math.max(0, (1 - age / 55) * 0.65);
+    ctx.fillStyle = '#d1d5db';
     ctx.beginPath();
-    ctx.ellipse(0, 0, ed * 0.38, ed * 0.3, 0, 0, Math.PI * 2);
-    ctx.fillStyle = 'rgba(15,15,15,0.8)';
+    ctx.arc(sx, sy, sr, 0, Math.PI * 2);
     ctx.fill();
-    ctx.restore();
+  }
+  ctx.globalAlpha = 1;
+
+  ctx.restore();
+}
+
+// ---- ひよこたち ----
+export function drawChicks(ctx: CanvasRenderingContext2D, cw: number, ch: number, frame: number) {
+  // 14羽のひよこ：x位置・ボウンスの位相を固定
+  const chicks = [
+    [0.07, 0.0], [0.20, 1.3], [0.33, 0.6], [0.46, 2.1], [0.59, 0.9], [0.72, 1.7], [0.88, 0.3],
+    [0.13, 3.0], [0.27, 2.5], [0.40, 1.1], [0.53, 3.4], [0.66, 0.5], [0.80, 2.8], [0.94, 1.5],
+  ];
+
+  ctx.save();
+  ctx.font = '46px serif';
+  ctx.textBaseline = 'middle';
+  ctx.textAlign = 'center';
+
+  chicks.forEach(([bx, phase]) => {
+    const x = bx * cw;
+    // ぴょんぴょん跳ねる：sin の絶対値でバウンド感を出す
+    const bounce = Math.abs(Math.sin(frame * 0.09 + phase));
+    const y = ch * 0.72 - bounce * ch * 0.42;
+
+    // 影（地面）
+    ctx.globalAlpha = 0.18 + bounce * 0.05;
+    ctx.fillStyle = '#000';
+    ctx.beginPath();
+    ctx.ellipse(x, ch * 0.72 + 14, 18 - bounce * 6, 5, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.globalAlpha = 1;
+    ctx.fillText('🐥', x, y);
   });
 
-  // 鼻（黒い小判形）
-  ctx.beginPath();
-  ctx.ellipse(nose.x, nose.y, ed * 0.14, ed * 0.1, 0, 0, Math.PI * 2);
-  ctx.fillStyle = '#111';
-  ctx.fill();
-
+  ctx.globalAlpha = 1;
   ctx.restore();
 }
 

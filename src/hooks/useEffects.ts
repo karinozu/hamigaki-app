@@ -1,7 +1,8 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { EffectType } from '@/types';
 
-const EFFECTS: EffectType[] = ['lion', 'fireworks', 'beam', 'panda', 'cat'];
+const EFFECTS: EffectType[] = ['lion', 'fireworks', 'beam', 'train', 'chicks', 'cat'];
+const AUTO_CHANGE_MS = 5000; // 口を開けて5秒で自動切り替え
 
 function playEffectSound() {
   try {
@@ -31,24 +32,47 @@ export function useEffects(mouthOpen: boolean, isRunning: boolean) {
   const [currentEffect, setCurrentEffect] = useState<EffectType | null>(null);
   const [effectCount, setEffectCount] = useState(0);
   const prevMouthOpenRef = useRef(false);
+  const currentEffectRef = useRef<EffectType | null>(null);
+  const autoIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // 直前と異なるエフェクトをランダム選択して発動
+  const triggerNextEffect = useCallback(() => {
+    const available = EFFECTS.filter(e => e !== currentEffectRef.current);
+    const next = available[Math.floor(Math.random() * available.length)];
+    currentEffectRef.current = next;
+    setCurrentEffect(next);
+    setEffectCount(c => c + 1);
+    playEffectSound();
+  }, []);
 
   useEffect(() => {
     if (!isRunning) {
       setCurrentEffect(null);
+      currentEffectRef.current = null;
       prevMouthOpenRef.current = false;
+      clearInterval(autoIntervalRef.current!);
       return;
     }
+
+    // 口が開いた瞬間 → エフェクト発動 + 5秒ごとに自動切り替え開始
     if (mouthOpen && !prevMouthOpenRef.current) {
-      const next = EFFECTS[Math.floor(Math.random() * EFFECTS.length)];
-      setCurrentEffect(next);
-      setEffectCount((c) => c + 1);
-      playEffectSound();
+      triggerNextEffect();
+      clearInterval(autoIntervalRef.current!);
+      autoIntervalRef.current = setInterval(triggerNextEffect, AUTO_CHANGE_MS);
     }
+
+    // 口が閉じた瞬間 → エフェクト終了 + 自動切り替え停止
     if (!mouthOpen && prevMouthOpenRef.current) {
       setCurrentEffect(null);
+      currentEffectRef.current = null;
+      clearInterval(autoIntervalRef.current!);
     }
+
     prevMouthOpenRef.current = mouthOpen;
-  }, [mouthOpen, isRunning]);
+  }, [mouthOpen, isRunning, triggerNextEffect]);
+
+  // アンマウント時にインターバルを確実にクリア
+  useEffect(() => () => clearInterval(autoIntervalRef.current!), []);
 
   return { currentEffect, effectCount };
 }

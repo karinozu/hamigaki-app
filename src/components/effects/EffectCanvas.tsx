@@ -3,7 +3,7 @@
 import { useEffect, useRef } from 'react';
 import { EffectType, Landmark } from '@/types';
 import {
-  drawLion, drawBeam, drawPanda, drawCat,
+  drawLion, drawBeam, drawCat, drawTrain, drawChicks,
   createFireworksBurst, updateAndDrawFireworks,
   type Particle,
 } from './drawEffects';
@@ -21,7 +21,6 @@ export function EffectCanvas({ effect, landmarks, videoRef }: Props) {
   const burstTimerRef = useRef(0);
   const frameRef = useRef(0);
 
-  // ランドマークは毎フレーム更新するため ref で持つ
   landmarksRef.current = landmarks;
 
   // Canvas サイズを表示サイズに合わせる
@@ -82,8 +81,11 @@ export function EffectCanvas({ effect, landmarks, videoRef }: Props) {
         case 'beam':
           if (lms) drawBeam(ctx, lms, vw, vh, cw, ch, frame);
           break;
-        case 'panda':
-          if (lms) drawPanda(ctx, lms, vw, vh, cw, ch);
+        case 'train':
+          drawTrain(ctx, cw, ch, frame);
+          break;
+        case 'chicks':
+          drawChicks(ctx, cw, ch, frame);
           break;
         case 'cat':
           if (lms) drawCat(ctx, lms, vw, vh, cw, ch);

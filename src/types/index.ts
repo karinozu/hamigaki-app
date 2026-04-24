@@ -1,4 +1,4 @@
-export type EffectType = 'lion' | 'fireworks' | 'beam' | 'panda' | 'cat';
+export type EffectType = 'lion' | 'fireworks' | 'beam' | 'train' | 'chicks' | 'cat';
 
 export interface Landmark {
   x: number;
