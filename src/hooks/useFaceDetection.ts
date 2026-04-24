@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState, useCallback } from 'react';
-import { MOUTH_OPEN_THRESHOLD, LANDMARK_Z_CONFIDENCE_THRESHOLD, LANDMARK_Z_MAX_THRESHOLD } from '@/lib/constants';
+import { MOUTH_OPEN_THRESHOLD, LANDMARK_Z_CONFIDENCE_THRESHOLD, LANDMARK_Z_MAX_THRESHOLD, MOUTH_RATIO_HISTORY_SIZE, MOUTH_RATIO_SMOOTH_FACTOR } from '@/lib/constants';
 import { FaceState, Landmark } from '@/types';
 
 declare global {
@@ -51,6 +51,8 @@ export function useFaceDetection(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const faceMeshRef = useRef<any>(null);
   const prevMouthRatioRef = useRef<number>(0); // 前フレームの値を保持（案1）
+  const mouthRatioHistoryRef = useRef<number[]>([]); // フレーム履歴（案5）
+  const smoothedRatioRef = useRef<number>(0); // 平滑化された値（案5）
 
   // 複数のランドマークから信頼度付きの開き具合を計算（案1 + 案2）
   const calculateMouthOpenWithConfidence = useCallback(
@@ -97,6 +99,25 @@ export function useFaceDetection(
     []
   );
 
+  // 時間フィルタリング関数（案5）
+  const applyTimeFiltering = useCallback((ratio: number): number => {
+    // 履歴に現在のフレーム値を追加
+    mouthRatioHistoryRef.current.push(ratio);
+
+    // 履歴サイズを保持
+    if (mouthRatioHistoryRef.current.length > MOUTH_RATIO_HISTORY_SIZE) {
+      mouthRatioHistoryRef.current.shift();
+    }
+
+    // 指数移動平均（EMA）で平滑化
+    const newSmoothed =
+      MOUTH_RATIO_SMOOTH_FACTOR * ratio +
+      (1 - MOUTH_RATIO_SMOOTH_FACTOR) * smoothedRatioRef.current;
+    smoothedRatioRef.current = newSmoothed;
+
+    return newSmoothed;
+  }, []);
+
   const handleResults = useCallback(
     (results: {
       multiFaceLandmarks?: Array<Array<{ x: number; y: number; z: number }>>
@@ -109,16 +130,19 @@ export function useFaceDetection(
       const { ratio, confidence } = calculateMouthOpenWithConfidence(landmarks);
 
       // 信頼度が低い場合は前フレームの値を使用（案1: フォールバック）
-      const finalRatio = confidence > 0.6 ? ratio : prevMouthRatioRef.current;
-      prevMouthRatioRef.current = finalRatio;
+      const reliableRatio = confidence > 0.6 ? ratio : prevMouthRatioRef.current;
+      prevMouthRatioRef.current = reliableRatio;
+
+      // 時間フィルタリングで平滑化（案5）
+      const smoothedRatio = applyTimeFiltering(reliableRatio);
 
       setFaceState({
-        mouthOpen: finalRatio > MOUTH_OPEN_THRESHOLD,
-        mouthOpenRatio: finalRatio,
+        mouthOpen: smoothedRatio > MOUTH_OPEN_THRESHOLD,
+        mouthOpenRatio: smoothedRatio,
         landmarks,
       });
     },
-    [calculateMouthOpenWithConfidence]
+    [calculateMouthOpenWithConfidence, applyTimeFiltering]
   );
 
   useEffect(() => {
