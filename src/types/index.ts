@@ -1,8 +1,15 @@
-export type EffectType = 'lion' | 'beam' | 'star' | 'rainbow' | 'fireworks';
+export type EffectType = 'lion' | 'fireworks' | 'beam' | 'panda' | 'cat';
+
+export interface Landmark {
+  x: number;
+  y: number;
+  z: number;
+}
 
 export interface FaceState {
   mouthOpen: boolean;
-  mouthOpenRatio: number; // 0.0 - 1.0
+  mouthOpenRatio: number;
+  landmarks: Landmark[] | null;
 }
 
 export interface BrushingSession {

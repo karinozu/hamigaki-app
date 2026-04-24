@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { MOUTH_OPEN_THRESHOLD } from '@/lib/constants';
-import { FaceState } from '@/types';
+import { FaceState, Landmark } from '@/types';
 
 declare global {
   interface Window {
@@ -13,10 +13,7 @@ declare global {
 
 function loadMediaPipeCDN(): Promise<void> {
   return new Promise((resolve, reject) => {
-    if (typeof window !== 'undefined' && window.FaceMesh) {
-      resolve();
-      return;
-    }
+    if (typeof window !== 'undefined' && window.FaceMesh) { resolve(); return; }
     const script = document.createElement('script');
     script.src = 'https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js';
     script.crossOrigin = 'anonymous';
@@ -30,18 +27,23 @@ export function useFaceDetection(
   videoRef: React.RefObject<HTMLVideoElement | null>,
   isVideoReady: boolean
 ) {
-  const [faceState, setFaceState] = useState<FaceState>({ mouthOpen: false, mouthOpenRatio: 0 });
+  const [faceState, setFaceState] = useState<FaceState>({
+    mouthOpen: false,
+    mouthOpenRatio: 0,
+    landmarks: null,
+  });
   const rafRef = useRef<number | null>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const faceMeshRef = useRef<any>(null);
 
-  const handleResults = useCallback((results: { multiFaceLandmarks?: Array<Array<{ x: number; y: number; z: number }>> }) => {
+  const handleResults = useCallback((results: {
+    multiFaceLandmarks?: Array<Array<{ x: number; y: number; z: number }>>
+  }) => {
     if (!results.multiFaceLandmarks?.length) {
-      setFaceState({ mouthOpen: false, mouthOpenRatio: 0 });
+      setFaceState({ mouthOpen: false, mouthOpenRatio: 0, landmarks: null });
       return;
     }
-    const landmarks = results.multiFaceLandmarks[0];
-    // MediaPipe FaceMesh 正規化座標: 上唇=13, 下唇=14
+    const landmarks = results.multiFaceLandmarks[0] as Landmark[];
     const upperLip = landmarks[13];
     const lowerLip = landmarks[14];
     if (upperLip && lowerLip) {
@@ -49,13 +51,13 @@ export function useFaceDetection(
       setFaceState({
         mouthOpen: mouthOpenRatio > MOUTH_OPEN_THRESHOLD,
         mouthOpenRatio: Math.min(mouthOpenRatio, 1),
+        landmarks,
       });
     }
   }, []);
 
   useEffect(() => {
     if (!isVideoReady) return;
-
     let cancelled = false;
 
     (async () => {
@@ -79,9 +81,7 @@ export function useFaceDetection(
         const video = videoRef.current!;
         const sendFrame = async () => {
           if (cancelled) return;
-          if (video.readyState >= 2) {
-            await faceMesh.send({ image: video });
-          }
+          if (video.readyState >= 2) await faceMesh.send({ image: video });
           rafRef.current = requestAnimationFrame(sendFrame);
         };
         rafRef.current = requestAnimationFrame(sendFrame);

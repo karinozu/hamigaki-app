@@ -8,7 +8,7 @@ import { useFaceDetection } from '@/hooks/useFaceDetection';
 import { useTimer } from '@/hooks/useTimer';
 import { useEffects } from '@/hooks/useEffects';
 import { CameraView } from '@/components/camera/CameraView';
-import { EffectOverlay } from '@/components/effects/EffectOverlay';
+import { EffectCanvas } from '@/components/effects/EffectCanvas';
 import { BrushTimer } from '@/components/timer/BrushTimer';
 import { supabase } from '@/lib/supabase/client';
 
@@ -36,9 +36,7 @@ export default function BrushPage() {
         duration_sec: 120,
         effects_count: effectCountRef.current,
       });
-    } catch {
-      // Supabase未設定時はスキップ
-    }
+    } catch { /* Supabase未設定時はスキップ */ }
     router.push('/complete');
   }, [router, stopCamera]);
 
@@ -66,7 +64,6 @@ export default function BrushPage() {
   return (
     <main className="min-h-screen bg-gradient-to-b from-sky-300 via-blue-400 to-indigo-500 flex flex-col items-center justify-center p-4 overflow-hidden">
 
-      {/* 背景デコレーション（ふわふわアニメ） */}
       {DECO_ITEMS.map((item, i) => (
         <motion.span
           key={i}
@@ -79,7 +76,6 @@ export default function BrushPage() {
         </motion.span>
       ))}
 
-      {/* タイトル */}
       <motion.p
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
@@ -88,15 +84,18 @@ export default function BrushPage() {
         🦷 はみがきタイム！
       </motion.p>
 
-      {/* カメラフレーム */}
       <div className="relative z-10 w-full max-w-sm">
-        {/* レインボーボーダー */}
         <div className="rounded-3xl p-1 bg-gradient-to-br from-yellow-300 via-pink-400 to-purple-500 shadow-2xl">
           <div className="rounded-[20px] overflow-hidden bg-black aspect-[3/4] relative">
             <CameraView ref={videoRef} className="absolute inset-0 w-full h-full" />
-            <EffectOverlay effect={currentEffect} mouthOpenRatio={faceState.mouthOpenRatio} />
 
-            {/* 口を開けよう吹き出し */}
+            {/* Canvas エフェクト（顔にオーバーレイ） */}
+            <EffectCanvas
+              effect={currentEffect}
+              landmarks={faceState.landmarks}
+              videoRef={videoRef}
+            />
+
             {!faceState.mouthOpen && isRunning && (
               <motion.div
                 initial={{ scale: 0.9, opacity: 0 }}
@@ -111,13 +110,11 @@ export default function BrushPage() {
           </div>
         </div>
 
-        {/* タイマー（フレーム右上に重ねる） */}
         <div className="absolute -top-4 -right-4">
           <BrushTimer minutes={minutes} seconds={seconds} progress={progress} />
         </div>
       </div>
 
-      {/* 下部メッセージ */}
       <motion.p
         animate={{ opacity: [0.6, 1, 0.6] }}
         transition={{ duration: 2, repeat: Infinity }}
