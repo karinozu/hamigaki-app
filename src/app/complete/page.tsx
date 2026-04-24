@@ -73,7 +73,7 @@ export default function CompletePage() {
         className="text-center z-10"
       >
         <div className="text-9xl mb-4">🏆</div>
-        <h1 className="text-5xl font-black text-white drop-shadow-xl">
+        <h1 className="text-[clamp(1.6rem,8vw,3rem)] font-black text-white drop-shadow-xl whitespace-nowrap">
           よくできました！
         </h1>
         <p className="mt-3 text-orange-100 text-xl font-bold">
