@@ -1,17 +1,52 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 
+function playCompleteSound() {
+  try {
+    const AudioCtx = window.AudioContext || (window as Window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+    if (!AudioCtx) return;
+    const ctx = new AudioCtx();
+
+    // ファンファーレ風：明るい上昇メロディ
+    const melody = [
+      { freq: 523.25, t: 0.00 },  // C5
+      { freq: 659.25, t: 0.12 },  // E5
+      { freq: 783.99, t: 0.24 },  // G5
+      { freq: 1046.50, t: 0.36 }, // C6
+      { freq: 1318.51, t: 0.52 }, // E6
+      { freq: 1567.98, t: 0.65 }, // G6
+    ];
+
+    melody.forEach(({ freq, t }) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+
+      const start = ctx.currentTime + t;
+      gain.gain.setValueAtTime(0, start);
+      gain.gain.linearRampToValueAtTime(0.3, start + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001, start + 0.45);
+
+      osc.start(start);
+      osc.stop(start + 0.45);
+    });
+  } catch {
+    // Web Audio API 非対応環境では無視
+  }
+}
+
 export default function CompletePage() {
   const router = useRouter();
-  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
-    // 完了音声再生（public/audio/complete.mp3 が存在する場合）
-    audioRef.current = new Audio('/audio/complete.mp3');
-    audioRef.current.play().catch(() => {/* 音声ファイル未配置時は無視 */});
+    playCompleteSound();
   }, []);
 
   return (

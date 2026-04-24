@@ -21,13 +21,14 @@ export function EffectOverlay({ effect, mouthOpenRatio }: Props) {
 
   return (
     <div className="absolute inset-0 pointer-events-none overflow-hidden">
-      {/* 口の開き具合でグロー演出 */}
+      {/* 口の開き具合でグロー */}
       {mouthOpenRatio > 0.2 && (
         <div
-          className="absolute bottom-1/4 left-1/2 -translate-x-1/2 rounded-full blur-2xl bg-yellow-300 opacity-40"
+          className="absolute bottom-1/4 left-1/2 -translate-x-1/2 rounded-full blur-2xl bg-yellow-300 opacity-50"
           style={{
             width: `${mouthOpenRatio * 200}px`,
             height: `${mouthOpenRatio * 100}px`,
+            transition: 'width 0.1s, height 0.1s',
           }}
         />
       )}
@@ -36,16 +37,28 @@ export function EffectOverlay({ effect, mouthOpenRatio }: Props) {
         {config && (
           <motion.div
             key={effect}
-            initial={{ scale: 0, opacity: 0, y: 40 }}
-            animate={{ scale: 1.2, opacity: 1, y: 0 }}
-            exit={{ scale: 0, opacity: 0, y: -40 }}
-            transition={{ type: 'spring', stiffness: 400, damping: 20 }}
+            initial={{ scale: 0, opacity: 0, y: 30 }}
+            animate={{
+              scale: [1.2, 1.05, 1.15],
+              opacity: 1,
+              y: 0,
+            }}
+            exit={{ scale: 0, opacity: 0, y: -30 }}
+            transition={{
+              scale: { duration: 1.2, repeat: Infinity, repeatType: 'mirror', ease: 'easeInOut' },
+              opacity: { duration: 0.2 },
+              y: { type: 'spring', stiffness: 400, damping: 20 },
+            }}
             className="absolute inset-0 flex flex-col items-center justify-center gap-2"
           >
             <span className="text-8xl drop-shadow-xl">{config.emoji}</span>
-            <span className={`text-4xl font-black drop-shadow-lg ${config.color}`}>
+            <motion.span
+              animate={{ scale: [1, 1.08, 1] }}
+              transition={{ duration: 0.8, repeat: Infinity }}
+              className={`text-4xl font-black drop-shadow-lg ${config.color}`}
+            >
               {config.label}
-            </span>
+            </motion.span>
           </motion.div>
         )}
       </AnimatePresence>

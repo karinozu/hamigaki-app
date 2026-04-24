@@ -1,39 +1,65 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { EffectType } from '@/types';
-import { EFFECT_INTERVAL_MS, EFFECT_DISPLAY_MS } from '@/lib/constants';
 
 const EFFECTS: EffectType[] = ['lion', 'beam', 'star', 'rainbow', 'fireworks'];
+
+function playEffectSound() {
+  try {
+    const AudioCtx = window.AudioContext || (window as Window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+    if (!AudioCtx) return;
+    const ctx = new AudioCtx();
+
+    // 明るいアルペジオ（C5→E5→G5→C6）
+    const notes = [523.25, 659.25, 783.99, 1046.50];
+    notes.forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+
+      const t = ctx.currentTime + i * 0.09;
+      gain.gain.setValueAtTime(0, t);
+      gain.gain.linearRampToValueAtTime(0.28, t + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.3);
+
+      osc.start(t);
+      osc.stop(t + 0.3);
+    });
+  } catch {
+    // Web Audio API 非対応環境では無視
+  }
+}
 
 export function useEffects(mouthOpen: boolean, isRunning: boolean) {
   const [currentEffect, setCurrentEffect] = useState<EffectType | null>(null);
   const [effectCount, setEffectCount] = useState(0);
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const triggerEffect = useCallback(() => {
-    const effect = EFFECTS[Math.floor(Math.random() * EFFECTS.length)];
-    setCurrentEffect(effect);
-    setEffectCount((c) => c + 1);
-    timeoutRef.current = setTimeout(() => setCurrentEffect(null), EFFECT_DISPLAY_MS);
-  }, []);
+  const prevMouthOpenRef = useRef(false);
 
   useEffect(() => {
     if (!isRunning) {
-      clearInterval(intervalRef.current!);
-      clearTimeout(timeoutRef.current!);
       setCurrentEffect(null);
+      prevMouthOpenRef.current = false;
       return;
     }
 
-    intervalRef.current = setInterval(() => {
-      if (mouthOpen) triggerEffect();
-    }, EFFECT_INTERVAL_MS);
+    // 口が開いた瞬間 → ランダムエフェクト発動
+    if (mouthOpen && !prevMouthOpenRef.current) {
+      const next = EFFECTS[Math.floor(Math.random() * EFFECTS.length)];
+      setCurrentEffect(next);
+      setEffectCount((c) => c + 1);
+      playEffectSound();
+    }
 
-    return () => {
-      clearInterval(intervalRef.current!);
-      clearTimeout(timeoutRef.current!);
-    };
-  }, [isRunning, mouthOpen, triggerEffect]);
+    // 口が閉じた瞬間 → エフェクト終了
+    if (!mouthOpen && prevMouthOpenRef.current) {
+      setCurrentEffect(null);
+    }
+
+    prevMouthOpenRef.current = mouthOpen;
+  }, [mouthOpen, isRunning]);
 
   return { currentEffect, effectCount };
 }
