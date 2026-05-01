@@ -455,11 +455,13 @@ function drawHippoFace(ctx: CanvasRenderingContext2D, cx: number, cy: number, r:
 }
 
 export function drawHippos(ctx: CanvasRenderingContext2D, cw: number, ch: number, frame: number) {
-  const r = Math.min(cw, ch) * 0.13;
+  const r = Math.min(cw, ch) * 0.12;
   const hippos = [
-    { x: cw * 0.2, y: ch * 0.38, speed: 0.18 },
-    { x: cw * 0.5, y: ch * 0.55, speed: -0.13 },
-    { x: cw * 0.8, y: ch * 0.32, speed: 0.22 },
+    { x: cw * 0.18, y: ch * 0.30, speed:  0.36 },
+    { x: cw * 0.50, y: ch * 0.52, speed: -0.26 },
+    { x: cw * 0.82, y: ch * 0.28, speed:  0.44 },
+    { x: cw * 0.32, y: ch * 0.70, speed: -0.38 },
+    { x: cw * 0.68, y: ch * 0.68, speed:  0.30 },
   ];
   hippos.forEach(({ x, y, speed }) => {
     drawHippoFace(ctx, x, y, r, frame * speed);

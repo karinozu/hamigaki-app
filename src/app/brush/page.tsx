@@ -11,6 +11,7 @@ import { CameraView } from '@/components/camera/CameraView';
 import { EffectCanvas } from '@/components/effects/EffectCanvas';
 import { BrushTimer } from '@/components/timer/BrushTimer';
 import { supabase } from '@/lib/supabase/client';
+import { startBrushingBGM, stopBrushingBGM } from '@/lib/audio';
 
 const DECO_ITEMS = [
   { emoji: '⭐', x: '4%',  y: '6%',  duration: 2.2 },
@@ -44,6 +45,10 @@ export default function BrushPage() {
   const { currentEffect, effectCount } = useEffects(faceState.mouthOpen, isRunning);
 
   useEffect(() => { effectCountRef.current = effectCount; }, [effectCount]);
+  useEffect(() => {
+    startBrushingBGM();
+    return () => stopBrushingBGM();
+  }, []);
   useEffect(() => { startCamera(); }, [startCamera]);
   useEffect(() => {
     if (isReady && !isRunning) startTimer();
