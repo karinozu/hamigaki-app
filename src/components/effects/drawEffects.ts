@@ -528,14 +528,15 @@ export function drawSurf(ctx: CanvasRenderingContext2D, cw: number, ch: number, 
   const waveBaseY = ch * 0.62;
   const waveOff = frame * 3;
 
+  // 海背景・波ともに半透明（顔が見えるよう）
   const seaGrad = ctx.createLinearGradient(0, waveBaseY, 0, ch);
-  seaGrad.addColorStop(0, '#38bdf8');
-  seaGrad.addColorStop(1, '#0369a1');
+  seaGrad.addColorStop(0, 'rgba(56,189,248,0.30)');
+  seaGrad.addColorStop(1, 'rgba(3,105,161,0.30)');
   ctx.fillStyle = seaGrad;
   ctx.fillRect(0, waveBaseY - 40, cw, ch - waveBaseY + 40);
 
-  // Wave layers (back to front) - 波形のみ半透明
-  const waveColors = ['rgba(3,105,161,0.38)', 'rgba(14,165,233,0.32)', 'rgba(56,189,248,0.26)'];
+  // Wave layers (back to front)
+  const waveColors = ['rgba(3,105,161,0.30)', 'rgba(14,165,233,0.25)', 'rgba(56,189,248,0.20)'];
   for (let w = 2; w >= 0; w--) {
     ctx.beginPath();
     ctx.moveTo(0, ch);
@@ -579,10 +580,11 @@ export function drawFish(ctx: CanvasRenderingContext2D, cw: number, ch: number, 
   const waveBaseY = ch * 0.45;
   const waveOff = frame * 2;
 
+  // 海背景・波ともに半透明（顔が見えるよう）
   const seaGrad = ctx.createLinearGradient(0, waveBaseY, 0, ch);
-  seaGrad.addColorStop(0,   '#38bdf8');
-  seaGrad.addColorStop(0.5, '#0284c7');
-  seaGrad.addColorStop(1,   '#075985');
+  seaGrad.addColorStop(0,   'rgba(56,189,248,0.28)');
+  seaGrad.addColorStop(0.5, 'rgba(2,132,199,0.28)');
+  seaGrad.addColorStop(1,   'rgba(7,89,133,0.28)');
   ctx.fillStyle = seaGrad;
   ctx.fillRect(0, waveBaseY - 30, cw, ch - waveBaseY + 30);
 
@@ -598,7 +600,7 @@ export function drawFish(ctx: CanvasRenderingContext2D, cw: number, ch: number, 
     }
     ctx.lineTo(cw, ch);
     ctx.closePath();
-    ctx.fillStyle = w === 0 ? 'rgba(14,165,233,0.38)' : 'rgba(56,189,248,0.28)'; // 波形のみ半透明
+    ctx.fillStyle = w === 0 ? 'rgba(14,165,233,0.28)' : 'rgba(56,189,248,0.22)';
     ctx.fill();
   }
 
