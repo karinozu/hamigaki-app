@@ -5,7 +5,10 @@ import { EffectType, Landmark } from '@/types';
 import {
   drawLion, drawBeam, drawCat, drawTrain, drawChicks,
   createFireworksBurst, updateAndDrawFireworks,
+  updateAndDrawBubbles, drawHippos, initPiglets, updateAndDrawPiglets, drawSurf, drawFish,
   type Particle,
+  type BubbleParticle,
+  type PigletState,
 } from './drawEffects';
 
 interface Props {
@@ -20,6 +23,8 @@ export function EffectCanvas({ effect, landmarks, videoRef }: Props) {
   const particlesRef = useRef<Particle[]>([]);
   const burstTimerRef = useRef(0);
   const frameRef = useRef(0);
+  const bubblesRef = useRef<BubbleParticle[]>([]);
+  const pigletsRef = useRef<PigletState[]>([]);
 
   landmarksRef.current = landmarks;
 
@@ -44,6 +49,8 @@ export function EffectCanvas({ effect, landmarks, videoRef }: Props) {
 
     particlesRef.current = [];
     burstTimerRef.current = 0;
+    bubblesRef.current = [];
+    pigletsRef.current = [];
     frameRef.current = 0;
 
     if (!effect) {
@@ -89,6 +96,22 @@ export function EffectCanvas({ effect, landmarks, videoRef }: Props) {
           break;
         case 'cat':
           if (lms) drawCat(ctx, lms, vw, vh, cw, ch);
+          break;
+        case 'bubbles':
+          updateAndDrawBubbles(ctx, bubblesRef.current, lms, vw, vh, cw, ch, frame);
+          break;
+        case 'hippo':
+          drawHippos(ctx, cw, ch, frame);
+          break;
+        case 'piglet':
+          if (pigletsRef.current.length === 0) pigletsRef.current = initPiglets(cw, ch);
+          updateAndDrawPiglets(ctx, pigletsRef.current, cw, ch);
+          break;
+        case 'surf':
+          drawSurf(ctx, cw, ch, frame);
+          break;
+        case 'fish':
+          drawFish(ctx, cw, ch, frame);
           break;
       }
 

@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { EffectType } from '@/types';
 
-const EFFECTS: EffectType[] = ['lion', 'fireworks', 'beam', 'train', 'chicks', 'cat'];
+const EFFECTS: EffectType[] = ['lion', 'fireworks', 'beam', 'train', 'chicks', 'cat', 'bubbles', 'hippo', 'piglet', 'surf', 'fish'];
 const AUTO_CHANGE_MS = 5000; // 口を開けて5秒で自動切り替え
 
 function playEffectSound() {
