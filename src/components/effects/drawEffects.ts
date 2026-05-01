@@ -457,16 +457,16 @@ function drawHippoFace(ctx: CanvasRenderingContext2D, cx: number, cy: number, r:
 export function drawHippos(ctx: CanvasRenderingContext2D, cw: number, ch: number, frame: number) {
   const r = Math.min(cw, ch) * 0.13;
   const hippos = [
-    { x: cw * 0.2, y: ch * 0.38, speed: 0.016 },
-    { x: cw * 0.5, y: ch * 0.55, speed: -0.011 },
-    { x: cw * 0.8, y: ch * 0.32, speed: 0.020 },
+    { x: cw * 0.2, y: ch * 0.38, speed: 0.18 },
+    { x: cw * 0.5, y: ch * 0.55, speed: -0.13 },
+    { x: cw * 0.8, y: ch * 0.32, speed: 0.22 },
   ];
   hippos.forEach(({ x, y, speed }) => {
     drawHippoFace(ctx, x, y, r, frame * speed);
   });
 }
 
-// ---- 子ブタ3匹 ----
+// ---- 子ブタ15匹 ----
 export interface PigletState {
   x: number; y: number;
   angle: number;
@@ -475,12 +475,12 @@ export interface PigletState {
 }
 
 export function initPiglets(cw: number, ch: number): PigletState[] {
-  return [0, 1, 2].map(i => ({
-    x: cw * (0.2 + i * 0.3),
-    y: ch * (0.3 + Math.random() * 0.4),
+  return Array.from({ length: 15 }, (_, i) => ({
+    x: cw * (0.05 + (i % 5) * 0.22),
+    y: ch * (0.15 + Math.floor(i / 5) * 0.28 + Math.random() * 0.1),
     angle: Math.random() * Math.PI * 2,
     targetAngle: Math.random() * Math.PI * 2,
-    changeTimer: 20 + Math.floor(Math.random() * 60),
+    changeTimer: 10 + Math.floor(Math.random() * 50),
   }));
 }
 
@@ -630,11 +630,7 @@ export function drawFish(ctx: CanvasRenderingContext2D, cw: number, ch: number, 
   formation.forEach(([dx, dy]) => {
     const fx = schoolX + dx;
     const fy = schoolY + dy + Math.sin(frame * 0.05 + dx * 0.015) * 10;
-    ctx.save();
-    ctx.translate(fx, fy);
-    ctx.scale(-1, 1);
-    ctx.fillText('🐟', 0, 0);
-    ctx.restore();
+    ctx.fillText('🐟', fx, fy);
   });
 
   // Tiny bubbles from fish
