@@ -534,8 +534,8 @@ export function drawSurf(ctx: CanvasRenderingContext2D, cw: number, ch: number, 
   ctx.fillStyle = seaGrad;
   ctx.fillRect(0, waveBaseY - 40, cw, ch - waveBaseY + 40);
 
-  // Wave layers (back to front)
-  const waveColors = ['rgba(3,105,161,0.8)', 'rgba(14,165,233,0.75)', 'rgba(56,189,248,0.65)'];
+  // Wave layers (back to front) - 波形のみ半透明
+  const waveColors = ['rgba(3,105,161,0.38)', 'rgba(14,165,233,0.32)', 'rgba(56,189,248,0.26)'];
   for (let w = 2; w >= 0; w--) {
     ctx.beginPath();
     ctx.moveTo(0, ch);
@@ -598,7 +598,7 @@ export function drawFish(ctx: CanvasRenderingContext2D, cw: number, ch: number, 
     }
     ctx.lineTo(cw, ch);
     ctx.closePath();
-    ctx.fillStyle = w === 0 ? 'rgba(14,165,233,0.8)' : 'rgba(56,189,248,0.65)';
+    ctx.fillStyle = w === 0 ? 'rgba(14,165,233,0.38)' : 'rgba(56,189,248,0.28)'; // 波形のみ半透明
     ctx.fill();
   }
 
