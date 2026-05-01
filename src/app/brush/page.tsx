@@ -30,6 +30,7 @@ export default function BrushPage() {
   const faceState = useFaceDetection(videoRef, isReady);
 
   const handleComplete = useCallback(async () => {
+    stopBrushingBGM(); // BGMを完了前に明示的に停止
     stopCamera();
     try {
       await supabase.from('brushing_sessions').insert({
