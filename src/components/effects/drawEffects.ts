@@ -528,14 +528,15 @@ export function drawSurf(ctx: CanvasRenderingContext2D, cw: number, ch: number, 
   const waveBaseY = ch * 0.62;
   const waveOff = frame * 3;
 
+  // 薄い海背景（顔が透けて見えるよう低透明度）
   const seaGrad = ctx.createLinearGradient(0, waveBaseY, 0, ch);
-  seaGrad.addColorStop(0, '#38bdf8');
-  seaGrad.addColorStop(1, '#0369a1');
+  seaGrad.addColorStop(0, 'rgba(56,189,248,0.22)');
+  seaGrad.addColorStop(1, 'rgba(3,105,161,0.22)');
   ctx.fillStyle = seaGrad;
   ctx.fillRect(0, waveBaseY - 40, cw, ch - waveBaseY + 40);
 
-  // Wave layers (back to front)
-  const waveColors = ['rgba(3,105,161,0.8)', 'rgba(14,165,233,0.75)', 'rgba(56,189,248,0.65)'];
+  // Wave layers (back to front) - 低透明度で顔を見せる
+  const waveColors = ['rgba(3,105,161,0.30)', 'rgba(14,165,233,0.28)', 'rgba(56,189,248,0.24)'];
   for (let w = 2; w >= 0; w--) {
     ctx.beginPath();
     ctx.moveTo(0, ch);
@@ -557,7 +558,7 @@ export function drawSurf(ctx: CanvasRenderingContext2D, cw: number, ch: number, 
     const y = waveBaseY + Math.sin((x + waveOff) * 0.018) * 18;
     if (x === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
   }
-  ctx.strokeStyle = 'rgba(255,255,255,0.88)';
+  ctx.strokeStyle = 'rgba(255,255,255,0.70)';
   ctx.lineWidth = 5;
   ctx.stroke();
 
@@ -579,14 +580,15 @@ export function drawFish(ctx: CanvasRenderingContext2D, cw: number, ch: number, 
   const waveBaseY = ch * 0.45;
   const waveOff = frame * 2;
 
+  // 薄い海背景（顔が透けて見えるよう低透明度）
   const seaGrad = ctx.createLinearGradient(0, waveBaseY, 0, ch);
-  seaGrad.addColorStop(0, '#38bdf8');
-  seaGrad.addColorStop(0.5, '#0284c7');
-  seaGrad.addColorStop(1, '#075985');
+  seaGrad.addColorStop(0,   'rgba(56,189,248,0.22)');
+  seaGrad.addColorStop(0.5, 'rgba(2,132,199,0.20)');
+  seaGrad.addColorStop(1,   'rgba(7,89,133,0.20)');
   ctx.fillStyle = seaGrad;
   ctx.fillRect(0, waveBaseY - 30, cw, ch - waveBaseY + 30);
 
-  // Wave layers
+  // Wave layers - 低透明度で顔を見せる
   for (let w = 1; w >= 0; w--) {
     ctx.beginPath();
     ctx.moveTo(0, ch);
@@ -598,7 +600,7 @@ export function drawFish(ctx: CanvasRenderingContext2D, cw: number, ch: number, 
     }
     ctx.lineTo(cw, ch);
     ctx.closePath();
-    ctx.fillStyle = w === 0 ? 'rgba(14,165,233,0.8)' : 'rgba(56,189,248,0.65)';
+    ctx.fillStyle = w === 0 ? 'rgba(14,165,233,0.30)' : 'rgba(56,189,248,0.24)';
     ctx.fill();
   }
 
@@ -608,7 +610,7 @@ export function drawFish(ctx: CanvasRenderingContext2D, cw: number, ch: number, 
     const y = waveBaseY + Math.sin((x + waveOff) * 0.016) * 16;
     if (x === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
   }
-  ctx.strokeStyle = 'rgba(255,255,255,0.8)';
+  ctx.strokeStyle = 'rgba(255,255,255,0.65)';
   ctx.lineWidth = 4;
   ctx.stroke();
 

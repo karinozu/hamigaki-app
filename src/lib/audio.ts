@@ -29,6 +29,8 @@ export function unlockAudio(): void {
 // 120BPM・Cメジャー・8秒ループのオリジナルチューン
 let bgmRunning = false;
 let bgmTimer: ReturnType<typeof setTimeout> | null = null;
+// マスターゲインノード：stopBrushingBGM() 時に即座にゲインを0にして既スケジュール音を無音化する
+let bgmMasterGain: GainNode | null = null;
 
 const BGM_BEAT = 0.5; // 120 BPM
 const BGM_LOOP = 16;  // 16beats = 8s
@@ -82,13 +84,14 @@ const BGM_SPARKLE: BgmNote[] = [
 ];
 
 function scheduleBgmLoop(ctx: AudioContext, startTime: number) {
-  if (!bgmRunning) return;
+  if (!bgmRunning || !bgmMasterGain) return;
 
+  const master = bgmMasterGain;
   const n = ([beat, freq, durBeats, vol, type]: BgmNote) => {
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
     osc.connect(gain);
-    gain.connect(ctx.destination);
+    gain.connect(master); // マスターゲイン経由で出力（即時停止対応）
     osc.type = type;
     osc.frequency.value = freq;
     const t = startTime + beat * BGM_BEAT;
@@ -116,6 +119,9 @@ export function startBrushingBGM(): void {
   const ctx = getAudioContext();
   if (!ctx) return;
   bgmRunning = true;
+  bgmMasterGain = ctx.createGain();
+  bgmMasterGain.gain.value = 1;
+  bgmMasterGain.connect(ctx.destination);
   scheduleBgmLoop(ctx, ctx.currentTime + 0.2);
 }
 
@@ -124,5 +130,15 @@ export function stopBrushingBGM(): void {
   if (bgmTimer !== null) {
     clearTimeout(bgmTimer);
     bgmTimer = null;
+  }
+  // 既にスケジュール済みの音もマスターゲインを即座に0にして無音化
+  if (bgmMasterGain) {
+    const now = bgmMasterGain.context.currentTime;
+    bgmMasterGain.gain.cancelScheduledValues(now);
+    bgmMasterGain.gain.setValueAtTime(bgmMasterGain.gain.value, now);
+    bgmMasterGain.gain.linearRampToValueAtTime(0, now + 0.08);
+    const oldGain = bgmMasterGain;
+    bgmMasterGain = null;
+    setTimeout(() => { try { oldGain.disconnect(); } catch { /* ignore */ } }, 300);
   }
 }
