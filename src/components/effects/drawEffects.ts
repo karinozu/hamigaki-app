@@ -727,125 +727,129 @@ export function drawCat(
   ctx.restore();
 }
 
-// ---- UFO ----
-function drawUfoBody(ctx: CanvasRenderingContext2D, x: number, y: number, r: number, frame: number) {
-  ctx.save();
-  ctx.translate(x, y);
-
-  // Tractor beam
-  const beamAlpha = 0.28 + Math.sin(frame * 0.22) * 0.10;
-  const beamGrad = ctx.createLinearGradient(0, r * 0.25, 0, r * 2.6);
-  beamGrad.addColorStop(0, `rgba(140,255,120,${beamAlpha})`);
-  beamGrad.addColorStop(1, 'rgba(140,255,120,0)');
+// ---- ウサギ＋「その調子！」----
+function drawRoundedRect(
+  ctx: CanvasRenderingContext2D,
+  x: number, y: number, w: number, h: number, r: number
+) {
   ctx.beginPath();
-  ctx.moveTo(-r * 0.38, r * 0.25);
-  ctx.lineTo(-r * 1.1, r * 2.6);
-  ctx.lineTo( r * 1.1, r * 2.6);
-  ctx.lineTo( r * 0.38, r * 0.25);
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
   ctx.closePath();
-  ctx.fillStyle = beamGrad;
-  ctx.fill();
-
-  // Saucer body
-  const bodyGrad = ctx.createLinearGradient(0, -r * 0.30, 0, r * 0.30);
-  bodyGrad.addColorStop(0, '#e2e8f0');
-  bodyGrad.addColorStop(0.5, '#94a3b8');
-  bodyGrad.addColorStop(1, '#334155');
-  ctx.beginPath();
-  ctx.ellipse(0, 0, r, r * 0.30, 0, 0, Math.PI * 2);
-  ctx.fillStyle = bodyGrad;
-  ctx.fill();
-  ctx.strokeStyle = '#1e293b';
-  ctx.lineWidth = 2;
-  ctx.stroke();
-
-  // Specular highlight on body
-  ctx.beginPath();
-  ctx.ellipse(0, -r * 0.10, r * 0.65, r * 0.10, 0, 0, Math.PI * 2);
-  ctx.fillStyle = 'rgba(255,255,255,0.28)';
-  ctx.fill();
-
-  // Dome (top half)
-  const domeY = -r * 0.27;
-  ctx.beginPath();
-  ctx.moveTo(-r * 0.46, domeY);
-  ctx.ellipse(0, domeY, r * 0.46, r * 0.44, 0, Math.PI, 0, true);
-  ctx.closePath();
-  const domeGrad = ctx.createRadialGradient(-r * 0.12, domeY - r * 0.25, r * 0.04, 0, domeY - r * 0.10, r * 0.50);
-  domeGrad.addColorStop(0, 'rgba(230,250,255,0.96)');
-  domeGrad.addColorStop(0.5, 'rgba(130,215,245,0.72)');
-  domeGrad.addColorStop(1, 'rgba(55,145,205,0.38)');
-  ctx.fillStyle = domeGrad;
-  ctx.fill();
-  ctx.strokeStyle = 'rgba(100,200,240,0.55)';
-  ctx.lineWidth = 1.5;
-  ctx.stroke();
-
-  // Rotating rim lights
-  const colors = ['#ff2222','#22ff22','#2244ff','#ffff22','#ff22ff','#22ffff','#ff8800','#00ff88'];
-  for (let i = 0; i < 8; i++) {
-    const a = (i / 8) * Math.PI * 2 + frame * 0.28;
-    const lx = Math.cos(a) * r * 0.82;
-    const ly = Math.sin(a) * r * 0.22;
-    ctx.beginPath();
-    ctx.arc(lx, ly, 4.5, 0, Math.PI * 2);
-    ctx.fillStyle = colors[i];
-    ctx.shadowColor = colors[i];
-    ctx.shadowBlur = 10;
-    ctx.fill();
-  }
-  ctx.shadowBlur = 0;
-  ctx.restore();
 }
 
-export function drawUfo(ctx: CanvasRenderingContext2D, cw: number, ch: number, frame: number) {
-  const WAIT  = 80; // ~1.3s hidden
-  const FLY   = 28; // ~0.47s flying (超高速)
-  const CYCLE = WAIT + FLY;
+export function drawRabbit(ctx: CanvasRenderingContext2D, cw: number, ch: number, frame: number) {
+  const SLIDE = 28;
+  const t = Math.min(frame / SLIDE, 1);
+  const ease = 1 - Math.pow(1 - t, 3); // cubic ease-out
 
-  const cycleFrame = frame % CYCLE;
-  if (cycleFrame < WAIT) return;
+  const rabbitSize = Math.min(cw, ch) * 0.18;
+  const restX = rabbitSize * 0.52;
+  const ux = -rabbitSize + (restX - (-rabbitSize)) * ease;
+  const bob = t >= 1 ? Math.abs(Math.sin(frame * 0.11)) * -10 : 0;
+  const uy = ch * 0.52 + bob;
 
-  const t = cycleFrame - WAIT;
-  const progress = t / FLY;
-
-  const cycleNum = Math.floor(frame / CYCLE);
-  const paths = [
-    { sx: -130, sy: ch * 0.22, ex: cw + 130, ey: ch * 0.18 },
-    { sx: cw + 130, sy: ch * 0.32, ex: -130,    ey: ch * 0.52 },
-    { sx: -130,    sy: ch * 0.58, ex: cw + 130, ey: ch * 0.24 },
-    { sx: cw + 130, sy: ch * 0.15, ex: -130,    ey: ch * 0.42 },
-  ];
-  const path = paths[cycleNum % paths.length];
-  const ux = path.sx + (path.ex - path.sx) * progress;
-  const uy = path.sy + (path.ey - path.sy) * progress;
-  const dvx = (path.ex - path.sx) / FLY;
-  const dvy = (path.ey - path.sy) / FLY;
-
-  // Motion trail (ghost copies)
   ctx.save();
-  for (let i = 5; i >= 1; i--) {
-    ctx.globalAlpha = ((6 - i) / 6) * 0.22;
-    drawUfoBody(ctx, ux - dvx * i * 1.8, uy - dvy * i * 1.8, 40, frame);
-  }
-  ctx.globalAlpha = 1;
+
+  // ウサギ本体
+  ctx.translate(ux, uy);
+  if (t < 1) ctx.rotate((1 - t) * 0.35); // スライド中は前傾き
+  ctx.font = `${rabbitSize}px serif`;
+  ctx.textBaseline = 'middle';
+  ctx.textAlign = 'center';
+  ctx.fillText('🐰', 0, 0);
   ctx.restore();
 
-  // Main UFO
-  drawUfoBody(ctx, ux, uy, 40, frame);
+  // 「その調子！」吹き出し（ウサギが半分以上入ってから）
+  if (t > 0.45) {
+    const textT = Math.min((t - 0.45) / 0.55, 1);
+    const textEase = 1 - Math.pow(1 - textT, 2);
+    const pulse = 1 + Math.sin(frame * 0.14) * 0.055;
+    const wobble = Math.sin(frame * 0.09) * 0.04;
 
-  // Speed lines
-  ctx.save();
-  const lineDir = dvx > 0 ? -1 : 1;
-  for (let l = 0; l < 6; l++) {
-    const ly = uy + (l - 2.5) * 15;
-    const lineLen = 50 + l * 10;
+    const fontSize = Math.min(cw * 0.095, ch * 0.065, 38);
+    const bubbleW = fontSize * 5.6;
+    const bubbleH = fontSize * 1.72;
+    const bubbleX = restX + rabbitSize * 0.48;
+    const bubbleY = uy - rabbitSize * 0.75;
+
+    ctx.save();
+    ctx.globalAlpha = textEase;
+
+    // 吹き出しシャドウ
+    ctx.shadowColor = 'rgba(0,0,0,0.18)';
+    ctx.shadowBlur = 10;
+    ctx.shadowOffsetY = 4;
+
+    // 吹き出し尻尾（ウサギ側）
     ctx.beginPath();
-    ctx.moveTo(ux + lineDir * 44, ly);
-    ctx.lineTo(ux + lineDir * (44 + lineLen), ly);
-    ctx.strokeStyle = `rgba(200,230,255,${0.55 - l * 0.08})`;
-    ctx.lineWidth = Math.max(0.5, 2.2 - l * 0.3);
+    ctx.moveTo(bubbleX + 16, bubbleY + bubbleH);
+    ctx.lineTo(bubbleX - fontSize * 0.5, bubbleY + bubbleH + fontSize * 0.58);
+    ctx.lineTo(bubbleX + 36, bubbleY + bubbleH);
+    ctx.closePath();
+    ctx.fillStyle = 'white';
+    ctx.fill();
+
+    // 吹き出し本体
+    ctx.shadowColor = 'rgba(0,0,0,0.18)';
+    drawRoundedRect(ctx, bubbleX, bubbleY, bubbleW, bubbleH, fontSize * 0.38);
+    ctx.fillStyle = 'white';
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.shadowOffsetY = 0;
+    ctx.strokeStyle = 'rgba(255,160,200,0.85)';
+    ctx.lineWidth = 3;
     ctx.stroke();
+
+    // 「その調子！」テキスト
+    ctx.save();
+    ctx.translate(bubbleX + bubbleW / 2, bubbleY + bubbleH / 2);
+    ctx.scale(pulse, pulse);
+    ctx.rotate(wobble);
+
+    ctx.font = `bold ${fontSize}px sans-serif`;
+    ctx.textBaseline = 'middle';
+    ctx.textAlign = 'center';
+
+    const grad = ctx.createLinearGradient(-bubbleW * 0.46, 0, bubbleW * 0.46, 0);
+    grad.addColorStop(0,    '#ff5f8a');
+    grad.addColorStop(0.33, '#ffb830');
+    grad.addColorStop(0.66, '#3cd27a');
+    grad.addColorStop(1,    '#4d96ff');
+
+    // 白縁
+    ctx.strokeStyle = 'rgba(255,255,255,0.95)';
+    ctx.lineWidth = fontSize * 0.26;
+    ctx.lineJoin = 'round';
+    ctx.strokeText('その調子！', 0, 0);
+
+    ctx.fillStyle = grad;
+    ctx.fillText('その調子！', 0, 0);
+    ctx.restore();
+
+    // キラキラ装飾（吹き出しの周り）
+    const stars = ['✨', '⭐', '💫', '🌟'];
+    const starSize = fontSize * 0.62;
+    ctx.font = `${starSize}px serif`;
+    ctx.textBaseline = 'middle';
+    ctx.textAlign = 'center';
+    ([
+      [bubbleX - starSize * 0.6,          bubbleY + bubbleH * 0.18, 0],
+      [bubbleX + bubbleW + starSize * 0.6, bubbleY + bubbleH * 0.18, 1],
+      [bubbleX + bubbleW * 0.25,          bubbleY - starSize * 0.7, 2],
+      [bubbleX + bubbleW * 0.78,          bubbleY - starSize * 0.6, 3],
+    ] as [number, number, number][]).forEach(([sx, sy, si]) => {
+      const starBob = Math.sin(frame * 0.17 + si * 1.3) * starSize * 0.18;
+      ctx.fillText(stars[si], sx, sy + starBob);
+    });
+
+    ctx.restore();
   }
-  ctx.restore();
 }

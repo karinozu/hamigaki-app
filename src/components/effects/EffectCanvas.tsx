@@ -5,7 +5,7 @@ import { EffectType, Landmark } from '@/types';
 import {
   drawLion, drawBeam, drawCat, drawTrain, drawChicks,
   createFireworksBurst, updateAndDrawFireworks,
-  updateAndDrawBubbles, drawHippos, initPiglets, updateAndDrawPiglets, drawSurf, drawFish, drawUfo,
+  updateAndDrawBubbles, drawHippos, initPiglets, updateAndDrawPiglets, drawSurf, drawFish, drawRabbit,
   type Particle,
   type BubbleParticle,
   type PigletState,
@@ -113,8 +113,8 @@ export function EffectCanvas({ effect, landmarks, videoRef }: Props) {
         case 'fish':
           drawFish(ctx, cw, ch, frame);
           break;
-        case 'ufo':
-          drawUfo(ctx, cw, ch, frame);
+        case 'rabbit':
+          drawRabbit(ctx, cw, ch, frame);
           break;
       }
 
